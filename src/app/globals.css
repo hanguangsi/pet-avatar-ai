@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f1eb;
+  --foreground: #2f241d;
+  --card: #fffaf4;
+  --card-foreground: #2f241d;
+  --popover: #fffaf4;
+  --popover-foreground: #2f241d;
+  --primary: #8b5e3c;
+  --primary-foreground: #fffaf4;
+  --secondary: #ead9c5;
+  --secondary-foreground: #523720;
+  --muted: #efe5da;
+  --muted-foreground: #7b6655;
+  --accent: #d6b28a;
+  --accent-foreground: #3b2819;
+  --destructive: #b9483e;
+  --destructive-foreground: #fffaf4;
+  --border: #e2d1bd;
+  --input: #e2d1bd;
+  --ring: #8b5e3c;
+  --radius: 1.25rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: #d6b28a;
+  color: #2f241d;
+}
+
+.pet-shadow {
+  box-shadow: 0 24px 70px rgb(93 59 31 / 0.16);
+}
+
+.soft-grid {
+  background-image:
+    linear-gradient(rgb(139 94 60 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(139 94 60 / 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.poster-pop {
+  background:
+    radial-gradient(circle at 18% 28%, #93d8ff 0 12%, transparent 13%),
+    radial-gradient(circle at 86% 4%, #ffd000 0 18%, transparent 19%),
+    radial-gradient(circle at 74% 82%, #ff8a00 0 24%, transparent 25%),
+    linear-gradient(135deg, #ec2f72 0%, #e92b72 48%, #ff7a00 100%);
+}
+
+.poster-card {
+  box-shadow: 0 28px 60px rgb(47 36 29 / 0.22);
+}
+
+.glass-nav {
+  background: rgb(255 255 255 / 0.72);
+  box-shadow: 0 18px 50px rgb(47 36 29 / 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.pet-blob {
+  background:
+    radial-gradient(circle at 50% 35%, #ffffff 0 9%, transparent 10%),
+    radial-gradient(circle at 35% 46%, #2f241d 0 4%, transparent 5%),
+    radial-gradient(circle at 65% 46%, #2f241d 0 4%, transparent 5%),
+    radial-gradient(circle at 50% 58%, #2f241d 0 3%, transparent 4%),
+    radial-gradient(circle at 50% 70%, #f0b4b4 0 8%, transparent 9%),
+    radial-gradient(circle at 50% 52%, #f3d6b8 0 38%, transparent 39%);
+}
+
+.pet-blob::before,
+.pet-blob::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  width: 34%;
+  height: 34%;
+  border-radius: 45% 45% 55% 55%;
+  background: #f3d6b8;
+}
+
+.pet-blob::before {
+  left: 9%;
+  transform: rotate(-25deg);
+}
+
+.pet-blob::after {
+  right: 9%;
+  transform: rotate(25deg);
+}
