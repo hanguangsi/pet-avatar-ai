@@ -18,19 +18,27 @@ export function AuthPanel() {
   async function signInWithEmail() {
     setLoading(true);
     setMessage("");
+
     const supabase = createClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || location.origin;
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard` },
+      options: {
+        emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
+      },
     });
+
     setLoading(false);
     setMessage(error ? error.message : "登录链接已发送，请查收邮箱。");
   }
 
   async function tryAnonymously() {
     setLoading(true);
+    setMessage("");
+
     const supabase = createClient();
     const { error } = await supabase.auth.signInAnonymously();
+
     setLoading(false);
     if (error) setMessage(error.message);
     else router.push("/dashboard");
@@ -45,7 +53,13 @@ export function AuthPanel() {
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="email">邮箱</Label>
-          <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
         </div>
         <Button disabled={!email || loading} onClick={signInWithEmail}>
           <Mail data-icon="inline-start" />
