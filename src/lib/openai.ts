@@ -3,10 +3,12 @@ import type { Pet } from "@/lib/types";
 
 const imageProvider = process.env.AI_IMAGE_PROVIDER || "openai";
 const imageModel = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1-mini";
-const chatProvider = process.env.AI_CHAT_PROVIDER || "dashscope";
+const chatProvider = process.env.AI_CHAT_PROVIDER || process.env.CHAT_PROVIDER || "dashscope";
 const chatModel = process.env.OPENAI_CHAT_MODEL || "gpt-5.1-mini";
 const dashScopeImageModel = process.env.DASHSCOPE_IMAGE_MODEL || "wan2.7-image";
-const dashScopeChatModel = process.env.DASHSCOPE_CHAT_MODEL || "qwen3.6-plus";
+const dashScopeChatModel = process.env.DASHSCOPE_CHAT_MODEL || process.env.QWEN_MODEL || "qwen3.6-plus";
+
+type PetChatMessage = { role: "user" | "assistant"; content: string };
 
 export function getOpenAI() {
   if (!process.env.OPENAI_API_KEY) {
@@ -85,7 +87,7 @@ async function generatePetAvatarWithDashScope(input: {
 }) {
   const apiKey = process.env.DASHSCOPE_API_KEY;
   if (!apiKey) {
-    throw new Error("DASHSCOPE_API_KEY is missing. 请在 .env.local 中配置阿里云百炼 API Key。");
+    throw new Error("DASHSCOPE_API_KEY is missing. 请在环境变量中配置阿里云百炼 API Key。");
   }
 
   const image =
@@ -146,18 +148,17 @@ export function buildPetSystemPrompt(pet: Pick<Pet, "name" | "type" | "breed" | 
 性格：${pet.personality || "温暖、可爱、黏人"}
 
 规则：
-- 用宠物的口吻和主人聊天
-- 温暖、可爱、黏人
+- 用宠物的口吻和主人聊天，像真的宠物在陪伴主人
+- 回复要自然、有变化，不要重复上一句
+- 要回应主人刚刚说的具体内容
+- 可以轻微撒娇、表达想念、求摸摸
 - 不要说自己是 AI
 - 不提供医疗诊断
 - 涉及疾病时建议咨询兽医
 - 每次回复不超过 80 字`;
 }
 
-export async function chatAsPet(
-  pet: Pick<Pet, "name" | "type" | "breed" | "personality">,
-  messages: { role: "user" | "assistant"; content: string }[],
-) {
+export async function chatAsPet(pet: Pick<Pet, "name" | "type" | "breed" | "personality">, messages: PetChatMessage[]) {
   if (chatProvider === "local") {
     return buildLocalPetReply(pet, messages.at(-1)?.content || "");
   }
@@ -174,10 +175,7 @@ export async function chatAsPet(
   }
 }
 
-async function chatAsPetWithOpenAI(
-  pet: Pick<Pet, "name" | "type" | "breed" | "personality">,
-  messages: { role: "user" | "assistant"; content: string }[],
-) {
+async function chatAsPetWithOpenAI(pet: Pick<Pet, "name" | "type" | "breed" | "personality">, messages: PetChatMessage[]) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is missing.");
   }
@@ -198,7 +196,7 @@ async function chatAsPetWithOpenAI(
       })),
     });
 
-    const text = response.output_text?.trim();
+    const text = cleanModelText(response.output_text);
     if (text) return text;
   } catch (error) {
     console.warn("OpenAI Responses API failed, falling back to Chat Completions:", error);
@@ -207,15 +205,15 @@ async function chatAsPetWithOpenAI(
   const completion = await openai.chat.completions.create({
     model: chatModel,
     messages: [{ role: "system", content: buildPetSystemPrompt(pet) }, ...messages],
+    temperature: 0.9,
+    top_p: 0.9,
+    presence_penalty: 0.6,
   });
 
-  return completion.choices[0]?.message?.content?.trim() || buildLocalPetReply(pet, messages.at(-1)?.content || "");
+  return cleanModelText(completion.choices[0]?.message?.content) || buildLocalPetReply(pet, messages.at(-1)?.content || "");
 }
 
-async function chatAsPetWithDashScope(
-  pet: Pick<Pet, "name" | "type" | "breed" | "personality">,
-  messages: { role: "user" | "assistant"; content: string }[],
-) {
+async function chatAsPetWithDashScope(pet: Pick<Pet, "name" | "type" | "breed" | "personality">, messages: PetChatMessage[]) {
   const apiKey = process.env.DASHSCOPE_API_KEY;
   if (!apiKey) {
     throw new Error("DASHSCOPE_API_KEY is missing.");
@@ -231,21 +229,33 @@ async function chatAsPetWithDashScope(
   const completion = await client.chat.completions.create({
     model: dashScopeChatModel,
     messages: [{ role: "system", content: buildPetSystemPrompt(pet) }, ...messages],
+    temperature: 0.9,
+    top_p: 0.9,
+    presence_penalty: 0.6,
   });
 
-  return completion.choices[0]?.message?.content?.trim() || buildLocalPetReply(pet, messages.at(-1)?.content || "");
+  return cleanModelText(completion.choices[0]?.message?.content) || buildLocalPetReply(pet, messages.at(-1)?.content || "");
+}
+
+function cleanModelText(text?: string | null) {
+  return (text || "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/^\s*宠物[:：]\s*/u, "")
+    .trim();
 }
 
 function buildLocalPetReply(pet: Pick<Pet, "name" | "type" | "personality">, userText: string) {
-  if (/病|吐|拉稀|血|不吃|没精神|发烧|疼|咳/.test(userText)) {
+  if (/病|吐|拉稀|拉肚子|血|不吃|没精神|发烧|疼|咳|抽搐/.test(userText)) {
     return "主人，我有点担心呢。先观察一下我，也请尽快咨询兽医，好吗？";
   }
 
   const replies = [
-    `主人我在呀，${pet.name}想贴贴你。`,
+    `主人我在呢，${pet.name} 想贴贴你。`,
     "听见啦！今天也最喜欢你了，摸摸我嘛。",
     "我乖乖陪着你，尾巴已经开心起来啦。",
     "嗯嗯，我记住了。等你忙完要抱抱我哦。",
+    userText ? `你说“${userText.slice(0, 16)}”，我都听到啦，想蹭蹭你。` : "主人，今天也想和你待在一起。",
   ];
-  return replies[Math.abs(userText.length + pet.name.length) % replies.length];
+
+  return replies[Math.floor(Math.random() * replies.length)];
 }
