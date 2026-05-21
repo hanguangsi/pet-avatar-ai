@@ -2,7 +2,13 @@ import Link from "next/link";
 import { PawPrint } from "lucide-react";
 import { AuthPanel } from "@/components/app/auth-panel";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { error } = await searchParams;
+
   return (
     <main className="grid min-h-screen bg-[#f4f1eb] md:grid-cols-[1.05fr_0.95fr]">
       <section className="poster-pop relative overflow-hidden px-6 py-8 text-white md:min-h-screen md:px-10 md:py-10">
@@ -18,10 +24,12 @@ export default function LoginPage() {
           <h1 className="mt-6 text-5xl font-black leading-tight md:text-7xl">
             专属萌宠
             <br />
-            3D形象
+            3D 形象
           </h1>
           <div className="my-5 h-px max-w-xl bg-white/80" />
-          <p className="max-w-xl text-xl font-semibold leading-8 text-white/90">登录后保存档案、聊天历史和健康记录，让爱宠拥有自己的数字分身。</p>
+          <p className="max-w-xl text-xl font-semibold leading-8 text-white/90">
+            登录后保存档案、聊天历史和健康记录，让爱宠拥有自己的数字分身。
+          </p>
         </div>
 
         <div className="poster-card relative z-10 mx-auto mt-10 max-w-sm rotate-3 rounded-[2.5rem] bg-white p-4 md:mt-14">
@@ -38,6 +46,7 @@ export default function LoginPage() {
             <h2 className="text-4xl font-black">开始创建萌宠分身</h2>
             <p className="mt-3 text-muted-foreground">先体验一次，满意后再完善宠物档案。</p>
           </div>
+          {error ? <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{decodeURIComponent(error)}</p> : null}
           <AuthPanel />
         </div>
       </section>

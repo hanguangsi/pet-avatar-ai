@@ -20,7 +20,7 @@ export function AuthPanel() {
     setMessage("");
 
     const supabase = createClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || location.origin;
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || location.origin).replace(/\/$/, "");
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
