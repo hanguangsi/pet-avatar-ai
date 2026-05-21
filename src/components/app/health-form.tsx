@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,25 +11,41 @@ import { Textarea } from "@/components/ui/textarea";
 
 export function HealthForm({ petId }: { petId: string }) {
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [savedPulse, setSavedPulse] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
+    setMessage("");
+
     const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
     const response = await fetch(`/api/health/${petId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, weight: payload.weight ? Number(payload.weight) : null }),
     });
+
     setLoading(false);
-    setMessage(response.ok ? "健康记录已保存" : "保存失败，请稍后重试");
-    router.refresh();
+    if (response.ok) {
+      setMessage("今天的陪伴已记录。");
+      setSavedPulse(true);
+      window.setTimeout(() => setSavedPulse(false), 520);
+      router.refresh();
+    } else {
+      setMessage("保存失败，请稍后重试");
+    }
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
+    <motion.form
+      onSubmit={onSubmit}
+      className="grid gap-4 md:grid-cols-2"
+      animate={savedPulse && !reduceMotion ? { scale: [1, 1.015, 1] } : undefined}
+      transition={{ duration: 0.42, ease: "easeOut" }}
+    >
       {[
         ["weight", "体重 kg", "number", "4.2"],
         ["food", "饮食", "text", "正常 / 少量 / 拒食"],
@@ -45,13 +62,22 @@ export function HealthForm({ petId }: { petId: string }) {
         <Label htmlFor="note">备注</Label>
         <Textarea id="note" name="note" placeholder="疫苗、驱虫、精神状态或其他观察" />
       </div>
-      <div className="flex items-center gap-3 md:col-span-2">
+      <div className="flex flex-wrap items-center gap-3 md:col-span-2">
         <Button disabled={loading}>
           <Activity data-icon="inline-start" />
           {loading ? "保存中" : "保存健康记录"}
         </Button>
-        {message ? <span className="text-sm text-muted-foreground">{message}</span> : null}
+        {message ? (
+          <motion.span
+            className="rounded-full bg-[#fff3df] px-3 py-1.5 text-sm font-medium text-[#8b563c]"
+            initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            {message}
+          </motion.span>
+        ) : null}
       </div>
-    </form>
+    </motion.form>
   );
 }
